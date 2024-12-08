@@ -9,6 +9,7 @@ import Foundation
 enum API {
     case getBudgets
     case budgetTransactions(budgetId: String)
+    case createTransaction(transaction: WithdrawalTransaction)
     
     var path: String {
         switch self {
@@ -16,6 +17,8 @@ enum API {
             return "/v1/budgets"
         case let .budgetTransactions(budgetId):
             return "/v1/budgets/\(budgetId)/transactions"
+        case .createTransaction:
+            return "/v1/transactions"
         }
     }
     
@@ -25,14 +28,42 @@ enum API {
             return "GET"
         case .budgetTransactions:
             return "GET"
+        case .createTransaction:
+            return "POST"
+        }
+    }
+    
+    var body: Data? {
+        switch self {
+        case let .createTransaction(transaction):
+            let transactionRequest: WithDrawalTransactionRequest = WithDrawalTransactionRequest(transactions: [transaction])
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            return try? encoder.encode(transactionRequest)
+        default:
+            return nil
+        }
+    }
+    
+    var headers: [String: String]? {
+        switch self {
+        case .createTransaction:
+            return ["accept": "application/vnd.api+json", "Content-Type": "application/json"]
+        default:
+            return nil
         }
     }
 
     var queryItems: [URLQueryItem]? {
-        startAndEndQueryItems(ofMonth: Calendar.current.component(.month, from: Date()))
+        switch self {
+        case .createTransaction:
+            return nil
+        default:
+            return startAndEndQueryItems(ofMonth: Calendar.current.component(.month, from: Date()))
+        }
     }
 
-    func startAndEndQueryItems(ofMonth month: Int) -> [URLQueryItem] {
+    private func startAndEndQueryItems(ofMonth month: Int) -> [URLQueryItem] {
         var calendar = Calendar.current
         calendar.timeZone = TimeZone(secondsFromGMT: 0)! // Ensure consistent formatting
         
@@ -88,9 +119,30 @@ struct APIClient {
         var request = URLRequest(url: url)
         request.httpMethod = api.method
         request.setValue(NetworkConfiguration.token, forHTTPHeaderField: "Authorization")
-        let (data, response) = try await URLSession.shared.data(for: request)
+        if let body = api.body {
+            request.httpBody = body
+        }
         
+        if let headers = api.headers {
+            headers.forEach { key, value in
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
+        let (data, response) = try await URLSession.shared.data(for: request)
+        print(response)
         // Check for valid HTTP response
+        if let httpResponse = response as? HTTPURLResponse {
+            print("Status Code: \(httpResponse.statusCode)")
+            print("Headers: \(httpResponse.allHeaderFields)")
+        }
+        
+        // Print response body
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("Response Body: \(jsonString)")
+        } else {
+            print("Failed to decode response body.")
+        }
+        
         if let httpResponse = response as? HTTPURLResponse,
            !(200...299).contains(httpResponse.statusCode) {
             throw NetworkError.invalidHTTPCode(httpResponse.statusCode)

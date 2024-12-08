@@ -80,10 +80,10 @@
 		017E4B062D035BEC00112A64 = {
 			isa = PBXGroup;
 			children = (
+				017E4B102D035BEC00112A64 /* Products */,
 				017E4B112D035BEC00112A64 /* Spendings */,
 				017E4B232D035BED00112A64 /* SpendingsTests */,
 				017E4B2D2D035BED00112A64 /* SpendingsUITests */,
-				017E4B102D035BEC00112A64 /* Products */,
 			);
 			sourceTree = "<group>";
 		};

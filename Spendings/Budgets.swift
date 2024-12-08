@@ -12,7 +12,8 @@ import SwiftUI
 struct Budgets {
     @ObservableState
     struct State: Equatable {
-        var budgets: [Budget]?
+        @Shared var budgets: [Budget]
+        var isLoading: Bool = false
     }
     
     enum Action {
@@ -26,14 +27,17 @@ struct Budgets {
         Reduce { state, action in
             switch action {
             case .loadBudgets:
+                state.isLoading = true
                 return .run { send in
                     await send(.budgetsResponse(Result {try await self.client.fetch()}))
                 }
             case let .budgetsResponse(.success(response)):
-                state.budgets = response
+                state.isLoading = false
+                state.$budgets.withLock { $0 = response}
                 return .none
             case .budgetsResponse(.failure):
-                state.budgets = []
+                state.isLoading = false
+                state.$budgets.withLock { $0 = []}
                 return .none
             }
         }
@@ -44,10 +48,9 @@ struct BudgetsView: View {
     @Bindable var store: StoreOf<Budgets>
 
     var body: some View {
-        
-        if let budgets = store.budgets {
+        ZStack {
             List {
-                ForEach(budgets) { budget in
+                ForEach(store.budgets) { budget in
                     NavigationLink(destination: {
                         TransactionsView(store: Store(initialState: Transactions.State(budgetID: budget.id)) {
                             Transactions()
@@ -74,11 +77,13 @@ struct BudgetsView: View {
             .refreshable {
                 store.send(.loadBudgets)
             }
-        } else {
-            ProgressView()
-                .onAppear {
-                    store.send(.loadBudgets)
-                }
+            if store.isLoading {
+                ProgressView("Submitting... ")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black.opacity(0.4))
+                    .edgesIgnoringSafeArea(.all)
+            }
+            
         }
     }
 }
@@ -93,7 +98,7 @@ private extension Budget {
 }
 #Preview {
     BudgetsView(
-        store: Store(initialState: Budgets.State(budgets: [.mock])) {
+        store: Store(initialState: Budgets.State(budgets: Shared(value: [.mock]))) {
             Budgets()
         }
     )
