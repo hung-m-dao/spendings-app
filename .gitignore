@@ -2,3 +2,5 @@
 xcuserdata
 *.xcuserstate
 Spendings/Secrets.plist
+*.xcbkptlist
+
