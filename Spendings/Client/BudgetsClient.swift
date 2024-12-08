@@ -16,8 +16,8 @@ struct BudgetResponse: Codable {
 struct Budget: Codable, Sendable, Equatable, Identifiable {
     let id: String
     let name: String
-    let spentSum: Double
-    let autoBudgetAmount: Double
+    let spentSum: Int
+    let autoBudgetAmount: Int
     
     init() {
         id = ""
@@ -49,11 +49,11 @@ struct Budget: Codable, Sendable, Equatable, Identifiable {
         id = try container.decode(String.self, forKey: .id)
         name = try attributesContainer.decode(String.self, forKey: .name)
         let stringAmount = try attributesContainer.decode(String.self, forKey: .autoBudgetAmount)
-        autoBudgetAmount = Double(stringAmount) ?? 0
+        autoBudgetAmount = Int(Double(stringAmount) ?? 0)
         let spentArray = try attributesContainer.decode([Spent].self, forKey: .spent)
         let spentSumString = spentArray.first?.sum
         if let spentSumString {
-            spentSum = Double(spentSumString) ?? 0
+            spentSum = Int(Double(spentSumString) ?? 0)
         } else {
             spentSum = 0
         }

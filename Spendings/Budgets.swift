@@ -57,19 +57,7 @@ struct BudgetsView: View {
                         })
                         .navigationTitle(budget.name)
                     }, label: {
-                        VStack(alignment: .leading) {
-                            Text("\(budget.name)")
-                            if budget.spentRatio > 1 {
-                                ProgressView(value: 1) {
-                                    Text("\(budget.descriptionText)")
-                                }
-                                .tint(.red)
-                            } else {
-                                ProgressView(value: budget.spentRatio) {
-                                    Text("\(budget.descriptionText)")
-                                }
-                            }
-                        }
+                        budgetItemView(with: budget)
                     })
                     
                 }
@@ -86,14 +74,52 @@ struct BudgetsView: View {
             
         }
     }
+
+    @ViewBuilder
+    func budgetItemView(with budget: Budget) -> some View {
+        VStack(alignment: .leading) {
+            Text("\(budget.name)")
+            if budget.spentRatio > 1 {
+                ProgressView(value: 1) {
+                    Text(budget.descriptionText)
+                    
+                }
+                .tint(.red)
+                HStack {
+                    Text("Remaining:")
+                    Text("\(budget.remainingAmount)")
+                        .foregroundStyle(.red)
+                }
+            } else {
+                ProgressView(value: budget.spentRatio) {
+                    Text("\(budget.descriptionText)")
+                }
+                HStack {
+                    Text("Remaining:")
+                    Text("\(budget.remainingAmount, format: .number)")
+                        .foregroundStyle(.green)
+                }
+            }
+            
+        }
+    }
 }
 
 private extension Budget {
     var spentRatio: Double {
-        abs(spentSum) / autoBudgetAmount
+        Double(abs(spentSum)) / Double(autoBudgetAmount)
     }
     var descriptionText: String {
-        "\(abs(spentSum)) / \(autoBudgetAmount)"
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        let spentString = formatter.string(from: abs(spentSum) as NSNumber) ?? ""
+        let budgetAmountString = formatter.string(from: autoBudgetAmount as NSNumber) ?? ""
+        return "\(spentString) / \(budgetAmountString)"
+    }
+
+    var remainingAmount: Int {
+        autoBudgetAmount - abs(spentSum)
     }
 }
 #Preview {

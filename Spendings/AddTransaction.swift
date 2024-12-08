@@ -71,7 +71,12 @@ struct AddTransaction {
 
 struct AddTransactionView: View {
     @Bindable var store: StoreOf<AddTransaction>
-
+    @FocusState var focus: Field?
+    enum Field: Hashable {
+        case description
+        case amount
+    }
+    
     var body: some View {
         ZStack {
             Form {
@@ -81,6 +86,12 @@ struct AddTransactionView: View {
                         "Enter description",
                         text: $store.description
                     )
+                    .focused($focus, equals: .description)
+                    .onSubmit {
+                        if store.amount.isEmpty {
+                            focus = .amount
+                        }
+                    }
                 }
                 
                 // Amount
@@ -89,16 +100,9 @@ struct AddTransactionView: View {
                         "Enter amount",
                         text: $store.amount
                     )
-                    .keyboardType(.decimalPad)
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-                            Button("Done") {
-                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                            }
-                            .fontWeight(.bold)
-                        }
-                    }
+                    .keyboardType(.numberPad)
+                    .focused($focus, equals: .amount)
+                    
                 }
                 
                 // Budget Picker
@@ -106,15 +110,18 @@ struct AddTransactionView: View {
                     Picker(
                         selection: $store.selectedBudgetID,
                         label: EmptyView()
-                        )
-                     {
-                         ForEach(store.budgets) { budget in
-                             Text(budget.name).tag(budget.id)
+                    )
+                    {
+                        ForEach(store.budgets) { budget in
+                            Text(budget.name).tag(budget.id)
                         }
                     }
-                     .pickerStyle(.inline)
+                    .pickerStyle(.inline)
+                    .onChange(of: store.selectedBudgetID) {
+                        focus = nil
+                    }
                 }
-
+                
                 
                 // Source Picker
                 Section(header: Text("Source")) {
@@ -129,8 +136,11 @@ struct AddTransactionView: View {
                     .pickerStyle(.segmented)
                     .listRowInsets(.init())
                     .listRowBackground(Color.clear)
+                    .onChange(of: store.selectedSourceID) {
+                        focus = nil
+                    }
                 }
-
+                
                 // Submit Button
                 Button(action: {
                     store.send(.submitForm)
@@ -146,9 +156,8 @@ struct AddTransactionView: View {
                 .listRowBackground(Color.clear)
                 .listRowInsets(.init())
             }
-            .scrollDismissesKeyboard(.interactively)
             .alert($store.scope(state: \.alert, action: \.alert))
-            
+            .scrollDismissesKeyboard(.interactively)
             if store.isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -157,6 +166,7 @@ struct AddTransactionView: View {
             }
         }
     }
+        
     
     private var shouldDisableSubmitButton: Bool {
         store.amount.isEmpty || store.description.isEmpty || store.selectedBudgetID.isEmpty || store.selectedSourceID.isEmpty

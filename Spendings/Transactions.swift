@@ -52,7 +52,7 @@ struct TransactionsView: View {
                         Text("\(transaction.description)")
                             .frame(maxWidth: 160, alignment: .leading)
                         Spacer()
-                        Text("\(transaction.amount.formattedDouble)")
+                        Text("\(transaction.amount.toInt)")
                     }
                 }
             }
@@ -67,9 +67,9 @@ struct TransactionsView: View {
 }
 
 private extension String {
-    var formattedDouble: String {
-        let doubleValue: Double = Double(self) ?? 0.0
-        return String(format: "%.1f", doubleValue)
+    var toInt: Int {
+        let doubleValue: Double = Double(self) ?? 0
+        return Int(doubleValue)
     }
 }
 
