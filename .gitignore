@@ -1,3 +1,4 @@
 *.pbxuser
 xcuserdata
 *.xcuserstate
+Spendings/Secrets.plist
