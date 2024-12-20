@@ -10,7 +10,9 @@ enum API {
     case getBudgets
     case budgetTransactions(budgetId: String)
     case createTransaction(transaction: WithdrawalTransaction)
-    
+    case getAccounts
+    case accountTransactions(accountId: String)
+
     var path: String {
         switch self {
         case .getBudgets:
@@ -19,6 +21,10 @@ enum API {
             return "/v1/budgets/\(budgetId)/transactions"
         case .createTransaction:
             return "/v1/transactions"
+        case .getAccounts:
+            return "/v1/accounts"
+        case let .accountTransactions(accountId):
+            return "/v1/accounts/\(accountId)/transactions"
         }
     }
     
@@ -26,10 +32,12 @@ enum API {
         switch self {
         case .getBudgets:
             return "GET"
-        case .budgetTransactions:
+        case .budgetTransactions, .accountTransactions:
             return "GET"
         case .createTransaction:
             return "POST"
+        case .getAccounts:
+            return "GET"
         }
     }
     
@@ -58,6 +66,8 @@ enum API {
         switch self {
         case .createTransaction:
             return nil
+        case .getAccounts:
+            return [URLQueryItem(name: "type", value: "asset")]
         default:
             return startAndEndQueryItems(ofMonth: Calendar.current.component(.month, from: Date()))
         }

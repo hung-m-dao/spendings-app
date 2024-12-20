@@ -52,7 +52,7 @@ struct BudgetsView: View {
             List {
                 ForEach(store.budgets) { budget in
                     NavigationLink(destination: {
-                        TransactionsView(store: Store(initialState: Transactions.State(budgetID: budget.id)) {
+                        TransactionsView(store: Store(initialState: Transactions.State(sourceId: budget.id, souceType: .budgets)) {
                             Transactions()
                         })
                         .navigationTitle(budget.name)

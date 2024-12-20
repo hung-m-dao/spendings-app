@@ -165,6 +165,9 @@ struct AddTransactionView: View {
                     .edgesIgnoringSafeArea(.all)
             }
         }
+        .onAppear {
+            focus = .description
+        }
     }
         
     

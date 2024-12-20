@@ -12,8 +12,15 @@ import SwiftUI
 struct Transactions {
     @ObservableState
     struct State: Equatable {
-        let budgetID: String
+        var isLoading: Bool = false
+        let sourceId: String
+        let souceType: SourceType
         var transactions: [Transaction]?
+        
+        enum SourceType {
+            case accounts
+            case budgets
+        }
     }
 
     enum Action {
@@ -27,16 +34,28 @@ struct Transactions {
         Reduce { state, action in
             switch action {
             case .loadTransactions:
-                return .run { [id = state.budgetID] send in
-                    await send(.transactionsResponse(Result { try await self.client.fetch(budgetID: id)}))
+                state.isLoading = true
+                return .run { [id = state.sourceId, type = state.souceType] send in
+                    await send(.transactionsResponse(Result { try await self.fetchTransaction(sourceId: id, sourceType: type)}))
                 }
             case .transactionsResponse(.failure):
+                state.isLoading = false
                 state.transactions = []
                 return .none
             case let .transactionsResponse(.success(response)):
+                state.isLoading = false
                 state.transactions = response
                 return .none
             }
+        }
+    }
+    
+    private func fetchTransaction(sourceId: String, sourceType: State.SourceType) async throws -> [Transaction] {
+        switch sourceType {
+        case .accounts:
+            try await client.fetchByAccounts(accountID: sourceId)
+        case .budgets:
+            try await client.fetchByBudgets(budgetID: sourceId)
         }
     }
 }
@@ -45,9 +64,9 @@ struct TransactionsView: View {
     @Bindable var store: StoreOf<Transactions>
     
     var body: some View {
-        if let transactions = store.transactions {
+        ZStack {
             List {
-                ForEach(transactions) { transaction in
+                ForEach(store.transactions ?? []) { transaction in
                     HStack {
                         Text("\(transaction.description)")
                             .frame(maxWidth: 160, alignment: .leading)
@@ -56,13 +75,18 @@ struct TransactionsView: View {
                     }
                 }
             }
-        } else {
-            ProgressView()
-                .onAppear {
-                    store.send(.loadTransactions)
-                }
+            .refreshable {
+                store.send(.loadTransactions)
+            }
+            if store.isLoading {
+                ProgressView()
+                    .background(Color.black.opacity(0.4))
+                    .edgesIgnoringSafeArea(.all)
+            }
         }
-        
+        .onAppear {
+            store.send(.loadTransactions)
+        }
     }
 }
 
@@ -74,7 +98,7 @@ private extension String {
 }
 
 #Preview {
-    TransactionsView(store: Store(initialState: Transactions.State(budgetID: "2")) {
+    TransactionsView(store: Store(initialState: Transactions.State(sourceId: "2", souceType: .budgets)) {
         Transactions()
     })
 }

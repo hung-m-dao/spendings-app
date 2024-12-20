@@ -29,7 +29,7 @@ struct Transaction: Codable, Equatable, Identifiable {
     let description: String
     let amount: String
     let id: String
-    let budgetID: String
+    let budgetID: String?
     
     enum CodingKeys: String, CodingKey {
         case id = "transaction_journal_id"
@@ -86,14 +86,15 @@ struct TransactionSource: Codable, Equatable, Identifiable {
 
 @DependencyClient
 struct TransactionsClient {
-    var fetch: @Sendable (_ budgetID: String) async throws -> [Transaction]
+    var fetchByBudgets: @Sendable (_ budgetID: String) async throws -> [Transaction]
+    var fetchByAccounts: @Sendable (_ accountID: String) async throws -> [Transaction]
     var create: @Sendable (_ transaction: WithdrawalTransaction) async throws -> ()
 }
 
 extension TransactionsClient: TestDependencyKey {
     static let testValue: TransactionsClient = Self()
     
-    static let previewValue: TransactionsClient = Self(fetch: { _ in [.mock]}, create: { _ in ()})
+    static let previewValue: TransactionsClient = Self(fetchByBudgets: { _ in [.mock]}, fetchByAccounts: { _ in [.mock] }, create: { _ in ()})
 }
 
 extension DependencyValues {
@@ -107,10 +108,20 @@ extension DependencyValues {
 
 extension TransactionsClient: DependencyKey {
     static let liveValue: TransactionsClient = TransactionsClient(
-        fetch: { budgetId in
+        fetchByBudgets: { budgetId in
             let data = try await APIClient().makeRequest(api: .budgetTransactions(budgetId: budgetId))
             let response = try JSONDecoder().decode(TransactionsResponse.self, from: data)
             return response.data.compactMap { $0.attributes.transactions.first }
+        },
+        fetchByAccounts: { accountId in
+            let data = try await APIClient().makeRequest(api: .accountTransactions(accountId: accountId))
+            do {
+                let response = try JSONDecoder().decode(TransactionsResponse.self, from: data)
+                return response.data.compactMap { $0.attributes.transactions.first }
+            } catch let DecodingError.valueNotFound(value, context) {
+                print("Missing value for \(value) at \(context.codingPath): \(context.debugDescription)")
+            }
+            return []
         },
         create: { transaction in
             let _ = try await APIClient().makeRequest(api: .createTransaction(transaction: transaction))

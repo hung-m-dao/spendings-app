@@ -59,6 +59,15 @@ struct RootView: View {
                         )
                     }
                 }
+                Tab("Accounts", systemImage: "wallet.bifold.fill") {
+                    NavigationStack {
+                        AccountsView(
+                            store:
+                                Store(initialState: Accounts.State()) {
+                            Accounts()
+                        })
+                    }
+                }
                 Tab("Add transaction", systemImage: "plus.circle") {
                     AddTransactionView(store: Store(initialState: AddTransaction.State(budgets: store.$budgets)) {
                         AddTransaction()
