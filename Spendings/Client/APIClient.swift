@@ -100,7 +100,8 @@ enum API {
         
         return [
             URLQueryItem(name: "start", value: firstDay),
-            URLQueryItem(name: "end", value: lastDay)
+            URLQueryItem(name: "end", value: lastDay),
+            URLQueryItem(name: "limit", value: "10")
         ]
     }
 }

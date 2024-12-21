@@ -12,20 +12,19 @@ import SwiftUI
 struct Transactions {
     @ObservableState
     struct State: Equatable {
-        var isLoading: Bool = false
-        let sourceId: String
-        let souceType: SourceType
-        var transactions: [Transaction]?
-        
-        enum SourceType {
-            case accounts
-            case budgets
-        }
+        var shouldShowSpinner: Bool = false
+        var fetchedTransactions: [Transaction]?
+    }
+    
+    enum SourceType {
+        case accounts
+        case budgets
     }
 
     enum Action {
         case loadTransactions
         case transactionsResponse(Result<[Transaction], any Error>)
+        case toggle
     }
     
     @Dependency(\.transactionsClient) var client
@@ -34,23 +33,23 @@ struct Transactions {
         Reduce { state, action in
             switch action {
             case .loadTransactions:
-                state.isLoading = true
-                return .run { [id = state.sourceId, type = state.souceType] send in
-                    await send(.transactionsResponse(Result { try await self.fetchTransaction(sourceId: id, sourceType: type)}))
+                return .run {  send in
+                    await send(.transactionsResponse(Result { try await self.client.fetchByAccounts(accountID: "1")}))
                 }
             case .transactionsResponse(.failure):
-                state.isLoading = false
-                state.transactions = []
+                state.fetchedTransactions = []
                 return .none
             case let .transactionsResponse(.success(response)):
-                state.isLoading = false
-                state.transactions = response
+                state.fetchedTransactions = response
+                return .none
+            case .toggle:
+                state.shouldShowSpinner.toggle()
                 return .none
             }
         }
     }
     
-    private func fetchTransaction(sourceId: String, sourceType: State.SourceType) async throws -> [Transaction] {
+    private func fetchTransaction(sourceId: String, sourceType: SourceType) async throws -> [Transaction] {
         switch sourceType {
         case .accounts:
             try await client.fetchByAccounts(accountID: sourceId)
@@ -66,22 +65,29 @@ struct TransactionsView: View {
     var body: some View {
         ZStack {
             List {
-                ForEach(store.transactions ?? []) { transaction in
-                    HStack {
-                        Text("\(transaction.description)")
-                            .frame(maxWidth: 160, alignment: .leading)
-                        Spacer()
-                        Text("\(transaction.amount.toInt)")
-                    }
+                ForEach(store.fetchedTransactions ?? []) {
+                    fetchedTransaction in
+                    Text("\(fetchedTransaction.description)")
                 }
+//                ForEach(store.fetchedTransactions) { transaction in
+//                    HStack {
+//                        Text("\(transaction.description)")
+//                            .frame(maxWidth: 160, alignment: .leading)
+//                        Spacer()
+//                        Text("\(transaction.amount.toInt)")
+//                    }
+//                }
             }
             .refreshable {
-                store.send(.loadTransactions)
+                await store.send(.loadTransactions).finish()
             }
-            if store.isLoading {
+            Button(action: {
+                store.send(.loadTransactions)
+            }) {
+                Text("Fetch")
+            }
+            if store.shouldShowSpinner {
                 ProgressView()
-                    .background(Color.black.opacity(0.4))
-                    .edgesIgnoringSafeArea(.all)
             }
         }
         .onAppear {
@@ -98,7 +104,7 @@ private extension String {
 }
 
 #Preview {
-    TransactionsView(store: Store(initialState: Transactions.State(sourceId: "2", souceType: .budgets)) {
+    TransactionsView(store: Store(initialState: Transactions.State()) {
         Transactions()
     })
 }

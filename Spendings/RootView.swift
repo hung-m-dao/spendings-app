@@ -50,15 +50,15 @@ struct RootView: View {
     var body: some View {
         if !store.budgets.isEmpty {
             TabView {
-                Tab("Budgets", systemImage: "dongsign.gauge.chart.lefthalf.righthalf") {
-                    NavigationStack {
-                        BudgetsView(
-                            store: Store(initialState: Budgets.State(budgets: store.$budgets)) {
-                                Budgets()
-                            }
-                        )
-                    }
-                }
+//                Tab("Budgets", systemImage: "dongsign.gauge.chart.lefthalf.righthalf") {
+//                    NavigationStack {
+//                        BudgetsView(
+//                            store: Store(initialState: Budgets.State(budgets: store.$budgets)) {
+//                                Budgets()
+//                            }
+//                        )
+//                    }
+//                }
                 Tab("Accounts", systemImage: "wallet.bifold.fill") {
                     NavigationStack {
                         AccountsView(

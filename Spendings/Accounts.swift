@@ -58,7 +58,7 @@ struct AccountsView: View {
                 List {
                     ForEach(accounts) { account in
                         NavigationLink(destination: {
-                            TransactionsView(store: Store(initialState: Transactions.State(sourceId: account.id, souceType: .accounts)) {
+                            TransactionsView(store: Store(initialState: Transactions.State()) {
                                 Transactions()
                             })
                             .navigationTitle(account.name)
