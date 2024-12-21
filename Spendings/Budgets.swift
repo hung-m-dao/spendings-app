@@ -66,10 +66,7 @@ struct BudgetsView: View {
                 store.send(.loadBudgets)
             }
             if store.isLoading {
-                ProgressView("Submitting... ")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black.opacity(0.4))
-                    .edgesIgnoringSafeArea(.all)
+                ProgressView()
             }
             
         }

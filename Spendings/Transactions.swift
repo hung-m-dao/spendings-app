@@ -80,8 +80,6 @@ struct TransactionsView: View {
             }
             if store.isLoading {
                 ProgressView()
-                    .background(Color.black.opacity(0.4))
-                    .edgesIgnoringSafeArea(.all)
             }
         }
         .onAppear {

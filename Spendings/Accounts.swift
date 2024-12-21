@@ -46,11 +46,6 @@ struct Accounts {
 
 struct AccountsView: View {
     @Bindable var store: StoreOf<Accounts>
-    @FocusState var focus: Field?
-    enum Field: Hashable {
-        case description
-        case amount
-    }
     
     var body: some View {
         ZStack {
@@ -75,9 +70,6 @@ struct AccountsView: View {
             }
             if store.isLoading {
                 ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black.opacity(0.4))
-                    .edgesIgnoringSafeArea(.all)
             }
         }
         .onAppear {
