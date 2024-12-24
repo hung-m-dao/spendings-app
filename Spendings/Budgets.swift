@@ -49,22 +49,31 @@ struct BudgetsView: View {
 
     var body: some View {
         ZStack {
-            List {
-                ForEach(store.budgets) { budget in
-                    NavigationLink(destination: {
-                        TransactionsView(store: Store(initialState: Transactions.State(sourceId: budget.id, souceType: .budgets)) {
-                            Transactions()
-                        })
-                        .navigationTitle(budget.name)
-                    }, label: {
-                        budgetItemView(with: budget)
-                    })
-                    
+            VStack {
+                HStack {
+                    Text("Total balance: ")
+                    Text("\(store.budgets.totalRemaining)")
+                        .foregroundStyle(store.budgets.totalRemaining > 0 ? .green : .red)
                 }
+                List {
+                    ForEach(store.budgets) { budget in
+                        NavigationLink(destination: {
+                            TransactionsView(store: Store(initialState: Transactions.State(sourceId: budget.id, souceType: .budgets)) {
+                                Transactions()
+                            })
+                            .navigationTitle(budget.name)
+                        }, label: {
+                            budgetItemView(with: budget)
+                        })
+                        
+                    }
+                }
+                .refreshable {
+                    store.send(.loadBudgets)
+                }
+                
             }
-            .refreshable {
-                store.send(.loadBudgets)
-            }
+            
             if store.isLoading {
                 ProgressView()
             }
@@ -117,6 +126,16 @@ private extension Budget {
 
     var remainingAmount: Int {
         autoBudgetAmount - abs(spentSum)
+    }
+}
+
+private extension Array where Element == Budget {
+    var totalRemaining: Int {
+        var result: Int = 0
+        for budget in self {
+            result += (budget.autoBudgetAmount - abs(budget.spentSum))
+        }
+        return result
     }
 }
 #Preview {
