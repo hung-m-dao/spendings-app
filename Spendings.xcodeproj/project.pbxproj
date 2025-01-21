@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		019245A02D3FA7C500D5F323 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0192459F2D3FA7C500D5F323 /* WidgetKit.framework */; };
 		019245A22D3FA7C500D5F323 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 019245A12D3FA7C500D5F323 /* SwiftUI.framework */; };
-		019245AE2D3FA7C600D5F323 /* BalancesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0192459D2D3FA7C500D5F323 /* BalancesExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		019245AE2D3FA7C600D5F323 /* BalancesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0192459D2D3FA7C500D5F323 /* BalancesExtension.appex */; platformFilters = (macos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		01F510032D0442CA00341D68 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 01F510022D0442CA00341D68 /* ComposableArchitecture */; };
 /* End PBXBuildFile section */
 
@@ -396,6 +396,9 @@
 		};
 		019245AD2D3FA7C600D5F323 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			platformFilters = (
+				macos,
+			);
 			target = 0192459C2D3FA7C500D5F323 /* BalancesExtension */;
 			targetProxy = 019245AC2D3FA7C600D5F323 /* PBXContainerItemProxy */;
 		};

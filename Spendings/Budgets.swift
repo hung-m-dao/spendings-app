@@ -7,6 +7,7 @@
 
 import ComposableArchitecture
 import SwiftUI
+import Charts
 
 @Reducer
 struct Budgets {
@@ -49,31 +50,61 @@ struct BudgetsView: View {
 
     var body: some View {
         ZStack {
-            VStack {
+            ScrollView {
                 HStack {
-                    Text("Total balance: ")
+                    Text("Balance: ")
                     Text("\(store.budgets.totalRemaining)")
                         .foregroundStyle(store.budgets.totalRemaining > 0 ? .green : .red)
                 }
-                List {
-                    ForEach(store.budgets) { budget in
+                Chart(store.budgets) { budget in
+                    SectorMark(
+                        angle: .value("Spent", budget.spentSum),
+                        innerRadius: .ratio(0.618),
+                        angularInset: 1.5
+                    )
+                    .foregroundStyle(by: .value("Category", budget.name))
+                }
+                .chartBackground { chartProxy in
+                    GeometryReader { geometry in
+                        let frame = geometry[chartProxy.plotFrame!]
+                        VStack {
+                            Text("Total spent")
+                                .font(.callout)
+                            Text("\(store.budgets.totalSpent)")
+                                .font(.title2.bold())
+                                .foregroundStyle(.red)
+                        }
+                        .position(x: frame.midX, y: frame.midY)
+                    }
+                }
+                .frame(minHeight: 300)
+                .padding(.horizontal, 16)
+                ForEach(store.budgets) { budget in
+                    VStack {
                         NavigationLink(destination: {
                             TransactionsView(store: Store(initialState: Transactions.State(sourceId: budget.id, souceType: .budgets)) {
                                 Transactions()
                             })
                             .navigationTitle(budget.name)
                         }, label: {
-                            budgetItemView(with: budget)
+                            HStack {
+                                budgetItemView(with: budget)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(Color(UIColor.label))
+                                                            
+                            }
+                            
                         })
-                        
+                        Divider()
                     }
+                    .padding(.horizontal)
                 }
-                .refreshable {
-                    store.send(.loadBudgets)
-                }
-                
             }
-            
+            .refreshable {
+                store.send(.loadBudgets)
+            }
+            .padding(.top, 1)
             if store.isLoading {
                 ProgressView()
             }
@@ -85,23 +116,26 @@ struct BudgetsView: View {
     func budgetItemView(with budget: Budget) -> some View {
         VStack(alignment: .leading) {
             Text("\(budget.name)")
+                .foregroundStyle(Color(UIColor.label))
             if budget.spentRatio > 1 {
                 ProgressView(value: 1) {
                     Text(budget.descriptionText)
-                    
                 }
                 .tint(.red)
                 HStack {
                     Text("Remaining:")
+                        .foregroundStyle(Color(UIColor.label))
                     Text("\(budget.remainingAmount)")
                         .foregroundStyle(.red)
                 }
             } else {
                 ProgressView(value: budget.spentRatio) {
                     Text("\(budget.descriptionText)")
+                        .foregroundStyle(Color(UIColor.label))
                 }
                 HStack {
                     Text("Remaining:")
+                        .foregroundStyle(Color(UIColor.label))
                     Text("\(budget.remainingAmount, format: .number)")
                         .foregroundStyle(.green)
                 }
@@ -137,10 +171,18 @@ private extension Array where Element == Budget {
         }
         return result
     }
+
+    var totalSpent: Int {
+        var result: Int = 0
+        for budget in self {
+            result += budget.spentSum
+        }
+        return result
+    }
 }
 #Preview {
     BudgetsView(
-        store: Store(initialState: Budgets.State(budgets: Shared(value: [.mock]))) {
+        store: Store(initialState: Budgets.State(budgets: Shared(value: [.mock, .mock, .mock, .mock, .mock, .mock]))) {
             Budgets()
         }
     )
