@@ -124,7 +124,11 @@ extension TransactionsClient: DependencyKey {
             return []
         },
         create: { transaction in
-            let _ = try await APIClient().makeRequest(api: .createTransaction(transaction: transaction))
+            let transactionRequest: WithDrawalTransactionRequest = WithDrawalTransactionRequest(transactions: [transaction])
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try? encoder.encode(transactionRequest)
+            let _ = try await APIClient().makeRequest(api: .createTransaction(data: data))
             return
         }
     )

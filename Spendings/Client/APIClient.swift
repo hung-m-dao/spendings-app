@@ -9,7 +9,7 @@ import Foundation
 enum API {
     case getBudgets
     case budgetTransactions(budgetId: String)
-    case createTransaction(transaction: WithdrawalTransaction)
+    case createTransaction(data: Data?)
     case getAccounts
     case accountTransactions(accountId: String)
 
@@ -43,11 +43,8 @@ enum API {
     
     var body: Data? {
         switch self {
-        case let .createTransaction(transaction):
-            let transactionRequest: WithDrawalTransactionRequest = WithDrawalTransactionRequest(transactions: [transaction])
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            return try? encoder.encode(transactionRequest)
+        case let .createTransaction(transactionData):
+            return transactionData
         default:
             return nil
         }

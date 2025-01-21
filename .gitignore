@@ -3,4 +3,7 @@ xcuserdata
 *.xcuserstate
 Spendings/Secrets.plist
 *.xcbkptlist
+*/Secrets.plist
+Balances/Secrets.plist
+.DS_Store
 

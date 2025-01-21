@@ -100,7 +100,7 @@ struct AddTransactionView: View {
                         "Enter amount",
                         text: $store.amount
                     )
-                    .keyboardType(.numberPad)
+//                    .keyboardType(.numberPad)
                     .focused($focus, equals: .amount)
                     
                 }
